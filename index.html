@@ -130,13 +130,26 @@ padding-right:2.2rem;
 }
 .filter-bar select:focus{border-color:var(--pink)}
 .filter-bar select option{background:var(--bg-card);color:var(--text)}
-.clear-btn{
+.clear-btn,.fav-filter{
 padding:.55rem 1rem;background:transparent;
 border:1px solid var(--border);border-radius:var(--radius-sm);
 color:var(--text-muted);cursor:pointer;font-size:.85rem;
 transition:all var(--transition);min-height:44px;white-space:nowrap;
 }
 .clear-btn:hover{border-color:var(--pink);color:var(--pink)}
+.fav-filter{display:inline-flex;align-items:center;gap:.35rem}
+.fav-filter:hover{border-color:var(--pink);color:var(--pink)}
+.fav-filter.active{border-color:var(--pink);background:rgba(233,30,130,.12);color:var(--pink)}
+.fav-filter .fav-count{font-size:.75rem;opacity:.7}
+.fav-btn{
+position:absolute;top:.75rem;right:.75rem;background:none;border:none;
+cursor:pointer;padding:.25rem;line-height:1;font-size:1.15rem;
+color:var(--text-dim);transition:all .15s ease;z-index:2;
+}
+.fav-btn:hover{color:var(--pink);transform:scale(1.15)}
+.fav-btn.hearted{color:var(--pink)}
+.fav-btn.hearted .heart-pop{animation:heart-pop .3s ease}
+@keyframes heart-pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
 
 /* Results info */
 .results-info{
@@ -336,6 +349,7 @@ border-radius:var(--radius-sm);
 <select id="venueFilter" aria-label="Filter by venue"><option value="">All Venues</option></select>
 <select id="roomFilter" aria-label="Filter by room"><option value="">All Rooms / Halls</option></select>
 <select id="kpFilter" aria-label="Filter by knowledge partner"><option value="">All Knowledge Partners</option></select>
+<button class="fav-filter" id="favFilter" aria-label="Show favorites"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg> <span id="favLabel">Favorites</span></button>
 <button class="clear-btn" id="clearBtn">Clear Filters</button>
 </div>
 </div>
@@ -369,6 +383,17 @@ let roomFilter = '';
 let kpFilter = '';
 let expandedSpeakers = new Set();
 let expandedDescs = new Set();
+let showFavoritesOnly = false;
+
+// Favorites persistence
+function getFavKey(s) { return s.title + '|' + s.date + '|' + s.time; }
+const favorites = new Set(JSON.parse(localStorage.getItem('summit-favorites') || '[]'));
+function saveFavorites() { localStorage.setItem('summit-favorites', JSON.stringify([...favorites])); }
+function toggleFavorite(idx) {
+  const key = getFavKey(SESSIONS[idx]);
+  if (favorites.has(key)) favorites.delete(key); else favorites.add(key);
+  saveFavorites();
+}
 
 // Precompute search index
 const searchIndex = SESSIONS.map((s, i) => ({
@@ -386,6 +411,8 @@ const venueSelect = document.getElementById('venueFilter');
 const roomSelect = document.getElementById('roomFilter');
 const kpSelect = document.getElementById('kpFilter');
 const clearBtn = document.getElementById('clearBtn');
+const favFilterBtn = document.getElementById('favFilter');
+const favLabel = document.getElementById('favLabel');
 const container = document.getElementById('sessionsContainer');
 const resultsText = document.getElementById('resultsText');
 const backToTop = document.getElementById('backToTop');
@@ -450,6 +477,14 @@ clearBtn.addEventListener('click', () => {
   venueSelect.value = ''; venueFilter = '';
   roomSelect.value = ''; roomFilter = '';
   kpSelect.value = ''; kpFilter = '';
+  showFavoritesOnly = false;
+  favFilterBtn.classList.remove('active');
+  render();
+});
+
+favFilterBtn.addEventListener('click', () => {
+  showFavoritesOnly = !showFavoritesOnly;
+  favFilterBtn.classList.toggle('active', showFavoritesOnly);
   render();
 });
 
@@ -535,6 +570,7 @@ function getFiltered() {
     if (roomFilter && s.room !== roomFilter) continue;
     if (kpFilter && s.knowledgePartners !== kpFilter) continue;
     if (searchQuery && !searchIndex[i].text.includes(searchQuery)) continue;
+    if (showFavoritesOnly && !favorites.has(getFavKey(s))) continue;
     results.push(i);
   }
   return results;
@@ -580,7 +616,13 @@ function cardHTML(idx) {
   const statusClass = status === 'past' ? ' past' : status === 'live' ? ' live' : '';
   const liveBadge = status === 'live' ? '<span class="live-badge"><span class="live-dot"></span>LIVE</span>' : '';
 
+  const isFav = favorites.has(getFavKey(s));
+  const heartSVG = isFav
+    ? '<svg class="heart-pop" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+
   return '<article class="session-card' + statusClass + '">' +
+    '<button class="fav-btn' + (isFav ? ' hearted' : '') + '" data-action="toggle-fav" data-idx="' + idx + '" aria-label="' + (isFav ? 'Remove from' : 'Add to') + ' favorites">' + heartSVG + '</button>' +
     '<div class="card-time">' + escHTML(s.time) + liveBadge + '</div>' +
     '<div class="card-title">' + escHTML(s.title) + '</div>' +
     '<div class="card-tags">' +
@@ -602,12 +644,16 @@ function render() {
   const filtered = getFiltered();
   const total = SESSIONS.length;
 
+  // Update favorites button
+  favLabel.textContent = favorites.size > 0 ? 'Favorites (' + favorites.size + ')' : 'Favorites';
+
   // Update filter badge
   let activeFilters = 0;
   if (searchQuery) activeFilters++;
   if (venueFilter) activeFilters++;
   if (roomFilter) activeFilters++;
   if (kpFilter) activeFilters++;
+  if (showFavoritesOnly) activeFilters++;
   filterBadge.style.display = activeFilters > 0 ? '' : 'none';
   filterBadge.textContent = activeFilters;
 
@@ -670,6 +716,11 @@ container.addEventListener('click', e => {
   const action = btn.dataset.action;
   const idx = parseInt(btn.dataset.idx);
 
+  if (action === 'toggle-fav') {
+    toggleFavorite(idx);
+    render();
+    return;
+  }
   if (action === 'expand-speakers') {
     expandedSpeakers.add(idx);
     render();
