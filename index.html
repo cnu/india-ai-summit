@@ -48,13 +48,13 @@ background-clip:text;position:relative;
 .header .subtitle{
 color:var(--text-muted);margin-top:.5rem;font-size:clamp(.85rem,2.5vw,1.1rem);
 }
+.header .sessions-link{display:inline-block;margin-top:.5rem;font-size:.85rem;color:var(--pink);text-decoration:none;transition:color .2s;}
+.header .sessions-link:hover{color:var(--yellow);}
+.header .sessions-link svg{width:12px;height:12px;vertical-align:-1px;margin-left:3px;fill:none;stroke:currentColor;stroke-width:2;}
 
 /* Date Tabs */
+.sticky-controls{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .date-tabs-wrapper{
-position:sticky;top:0;z-index:100;
-background:linear-gradient(180deg,var(--bg) 60%,rgba(10,10,46,.95));
-backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-border-bottom:1px solid var(--border);
 padding:.75rem 1rem;
 }
 .date-tabs{
@@ -83,8 +83,9 @@ margin-left:.4rem;font-size:.75rem;opacity:.7;
 
 /* Filter Section */
 .filter-section{
-max-width:1100px;margin:0 auto;padding:1rem;
+padding:.5rem 1rem .75rem;
 }
+.filter-section .filter-inner{max-width:1100px;margin:0 auto;}
 .filter-toggle{
 display:none;width:100%;padding:.7rem 1rem;
 background:var(--bg-card);border:1px solid var(--border);
@@ -100,7 +101,7 @@ padding:0 .5rem;font-size:.75rem;min-width:20px;text-align:center;
 .filter-toggle svg{transition:transform var(--transition)}
 .filter-toggle.open svg{transform:rotate(180deg)}
 .filter-bar{
-display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;
+display:flex;gap:.65rem;flex-wrap:nowrap;align-items:center;
 }
 .filter-bar .search-wrap{
 flex:1;min-width:220px;position:relative;
@@ -286,7 +287,7 @@ border-radius:var(--radius-sm);
 .header{padding:2rem .75rem 1.2rem}
 .date-tabs{justify-content:flex-start}
 .filter-toggle{display:flex}
-.filter-bar{display:none}
+.filter-bar{display:none;flex-wrap:wrap}
 .filter-bar.show{display:flex}
 .filter-bar>*{width:100%;min-width:0!important;max-width:100%!important}
 .filter-bar .search-wrap{min-width:0}
@@ -313,13 +314,16 @@ border-radius:var(--radius-sm);
 </div>
 <h1>India AI Impact Summit 2026</h1>
 <div class="subtitle">February 16 - 20, 2026 &nbsp;|&nbsp; Bharat Mandapam, New Delhi</div>
+<a class="sessions-link" href="https://impact.indiaai.gov.in/sessions" target="_blank" rel="noopener">View official sessions page <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></a>
 </header>
 
+<div class="sticky-controls">
 <nav class="date-tabs-wrapper">
 <div class="date-tabs" id="dateTabs"></div>
 </nav>
 
 <section class="filter-section">
+<div class="filter-inner">
 <button class="filter-toggle" id="filterToggle" aria-expanded="false" aria-controls="filterBar">
 <span>Filters <span class="badge" id="filterBadge" style="display:none">0</span></span>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
@@ -334,7 +338,9 @@ border-radius:var(--radius-sm);
 <select id="kpFilter" aria-label="Filter by knowledge partner"><option value="">All Knowledge Partners</option></select>
 <button class="clear-btn" id="clearBtn">Clear Filters</button>
 </div>
+</div>
 </section>
+</div>
 
 <div class="results-info">
 <span id="resultsText">Loading...</span>
